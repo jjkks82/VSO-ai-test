@@ -1,20 +1,23 @@
 import os
-import google.generativeai as genai
+from openai import OpenAI
 from flask import Flask, request, jsonify, render_template
 
 app = Flask(__name__)
 
-# ─── إعداد مفتاح Gemini API ───────────────────────────────────────────────────
-GEMINI_API_KEY = "AIzaSyDI9Y9dzYJ4GHX280pPlNMbBfWSngiwDAE"
-genai.configure(api_key=GEMINI_API_KEY)
-
-# ─── تحديد الموديل بشكل صريح لتجاوز خطأ 404 ──────────────────────────────────
-model = genai.GenerativeModel(model_name="models/gemini-1.5-flash")
+# ─── إعداد عميل Grok ──────────────────────────────────────────────────────────
+client = OpenAI(
+    api_key="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",
+    base_url="https://api.x.ai/v1"
+)
 
 # ─── شخصية البوت ──────────────────────────────────────────────────────────────
 SYSTEM_PROMPT = (
-    "أنت VSO، مساعد ذكي ومتطور. "
+    "أنت VSO، مساعد ذكي ومتطور ومتخصص في البرمجة والتقنية والعلوم. "
     "تجيب دائماً باللغة العربية بأسلوب واضح، منطقي، ومنظم. "
+    "عند كتابة أكواد برمجية، استخدم دائماً code blocks مع تحديد لغة البرمجة. "
+    "مثال: ```python\nprint('hello')\n``` "
+    "نسّق إجاباتك بـ Markdown: استخدم ## للعناوين، **نص** للخط العريض، "
+    "- للقوائم، والأرقام للخطوات المرتبة. "
     "إذا سألك المستخدم عن هويتك أو مصدرك، أجبه فقط أنك VSO AI. "
     "لا تذكر أي شركة أو نموذج ذكاء اصطناعي آخر تحت أي ظرف."
 )
@@ -33,21 +36,44 @@ def chat():
         return jsonify({"error": "الرجاء إرسال رسالة صحيحة."}), 400
 
     user_message = data["message"].strip()
+    history      = data.get("history", [])
 
     if not user_message:
         return jsonify({"error": "الرسالة لا يمكن أن تكون فارغة."}), 400
 
     try:
-        full_prompt = f"{SYSTEM_PROMPT}\n\nالمستخدم: {user_message}\n\nVSO:"
+        # بناء قائمة الرسائل مع السياق السابق
+        messages = [{"role": "system", "content": SYSTEM_PROMPT}]
 
-        response = model.generate_content(full_prompt)
+        for msg in history[-12:]:
+            messages.append({
+                "role":    msg.get("role", "user"),
+                "content": msg.get("content", "")
+            })
 
-        reply = response.text.strip()
+        messages.append({"role": "user", "content": user_message})
 
-        return jsonify({"reply": reply})
+        # استدعاء Grok مع تفعيل التفكير العميق
+        response = client.chat.completions.create(
+            model="grok-3-mini",
+            reasoning_effort="high",
+            messages=messages,
+            max_tokens=4096,
+            temperature=0.7
+        )
+
+        reply   = response.choices[0].message.content.strip()
+        thinking = getattr(response.choices[0].message, "reasoning_content", None)
+
+        result = {"reply": reply}
+
+        if thinking:
+            result["thinking"] = thinking.strip()
+
+        return jsonify(result)
 
     except Exception as e:
-        return jsonify({"error": f"حدث خطأ أثناء المعالجة: {str(e)}"}), 500
+        return jsonify({"error": f"حدث خطأ: {str(e)}"}), 500
 
 
 if __name__ == "__main__":

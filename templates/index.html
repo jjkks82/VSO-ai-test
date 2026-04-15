@@ -1,159 +1,536 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>VSO AI</title>
+
+  <!-- Highlight.js themes -->
+  <link id="hljs-theme-light" rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css"/>
+  <link id="hljs-theme-dark"  rel="stylesheet" disabled
+        href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css"/>
+
   <style>
+    /* ─── Reset & Tokens ─────────────────────────────────────────────────── */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-    body {
-      font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
-      background: #ffffff;
-      color: #1a1a1a;
-      height: 100dvh;
-      display: flex;
-      flex-direction: column;
+    :root {
+      --bg:           #ffffff;
+      --bg2:          #f7f7f8;
+      --bg3:          #efefef;
+      --surface:      #ffffff;
+      --border:       #e5e5e5;
+      --text:         #0d0d0d;
+      --text2:        #555;
+      --text3:        #999;
+      --accent:       #10a37f;
+      --accent-hover: #0d8f6e;
+      --accent-light: #e6f7f2;
+      --danger:       #e53e3e;
+      --code-bg:      #f6f8fa;
+      --code-border:  #d0d7de;
+      --think-bg:     #fff8e1;
+      --think-border: #f59e0b;
+      --think-text:   #92400e;
+      --radius:       12px;
+      --radius-sm:    8px;
+      --shadow:       0 1px 3px rgba(0,0,0,.08);
     }
 
-    /* ─── Header ─────────────────────────────────────── */
+    [data-theme="dark"] {
+      --bg:           #1a1a1a;
+      --bg2:          #212121;
+      --bg3:          #2a2a2a;
+      --surface:      #2a2a2a;
+      --border:       #3a3a3a;
+      --text:         #ececec;
+      --text2:        #aaa;
+      --text3:        #666;
+      --accent:       #19c49a;
+      --accent-hover: #14a882;
+      --accent-light: #0d2b24;
+      --code-bg:      #161b22;
+      --code-border:  #30363d;
+      --think-bg:     #2a2000;
+      --think-border: #d97706;
+      --think-text:   #fcd34d;
+    }
+
+    html, body {
+      height: 100%;
+      font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      transition: background .2s, color .2s;
+    }
+
+    body {
+      display: flex;
+      flex-direction: column;
+      height: 100dvh;
+    }
+
+    /* ─── Scrollbar ───────────────────────────────────────────────────────── */
+    ::-webkit-scrollbar        { width: 5px; height: 5px; }
+    ::-webkit-scrollbar-track  { background: transparent; }
+    ::-webkit-scrollbar-thumb  { background: var(--border); border-radius: 99px; }
+
+    /* ─── Header ──────────────────────────────────────────────────────────── */
     header {
       display: flex;
       align-items: center;
-      justify-content: center;
-      padding: 14px 20px;
-      border-bottom: 1px solid #e5e5e5;
-      background: #ffffff;
+      justify-content: space-between;
+      padding: 0 16px;
+      height: 56px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
       position: sticky;
       top: 0;
-      z-index: 10;
+      z-index: 100;
+      flex-shrink: 0;
     }
 
-    header h1 {
-      font-size: 18px;
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .logo-icon {
+      width: 32px; height: 32px;
+      background: var(--accent);
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px; font-weight: 700; color: #fff;
+      letter-spacing: -0.5px;
+    }
+
+    .logo-name {
+      font-size: 16px;
       font-weight: 600;
-      color: #1a1a1a;
-      letter-spacing: -0.3px;
+      color: var(--text);
     }
 
-    header h1 span {
-      color: #10a37f;
+    .logo-name span { color: var(--accent); }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
     }
 
-    /* ─── Messages Area ───────────────────────────────── */
-    #messages {
+    .icon-btn {
+      width: 34px; height: 34px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--text2);
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: background .15s, color .15s;
+      font-size: 15px;
+    }
+
+    .icon-btn:hover { background: var(--bg2); color: var(--text); }
+
+    /* ─── Chat area ───────────────────────────────────────────────────────── */
+    #chat-wrap {
       flex: 1;
+      overflow: hidden;
+      position: relative;
+    }
+
+    #messages {
+      height: 100%;
       overflow-y: auto;
-      padding: 24px 16px;
+      padding: 24px 16px 16px;
       display: flex;
       flex-direction: column;
-      gap: 8px;
+      gap: 4px;
       scroll-behavior: smooth;
     }
 
-    .msg-row {
-      display: flex;
-      width: 100%;
-    }
-
-    .msg-row.user  { justify-content: flex-start; }
-    .msg-row.bot   { justify-content: flex-end; }
-
-    .bubble {
-      max-width: min(75%, 640px);
-      padding: 12px 16px;
-      border-radius: 18px;
-      font-size: 15px;
-      line-height: 1.65;
-      word-break: break-word;
-    }
-
-    .msg-row.user .bubble {
-      background: #f4f4f4;
-      color: #1a1a1a;
-      border-bottom-right-radius: 4px;
-    }
-
-    .msg-row.bot .bubble {
-      background: #10a37f;
-      color: #ffffff;
-      border-bottom-left-radius: 4px;
-    }
-
-    /* ─── Typing indicator ────────────────────────────── */
-    .typing-bubble {
-      display: flex;
-      gap: 5px;
-      align-items: center;
-      padding: 12px 16px;
-      background: #10a37f;
-      border-radius: 18px;
-      border-bottom-left-radius: 4px;
-    }
-
-    .dot {
-      width: 7px; height: 7px;
-      background: rgba(255,255,255,0.7);
-      border-radius: 50%;
-      animation: bounce 1.2s infinite;
-    }
-    .dot:nth-child(2) { animation-delay: 0.2s; }
-    .dot:nth-child(3) { animation-delay: 0.4s; }
-
-    @keyframes bounce {
-      0%, 80%, 100% { transform: translateY(0); }
-      40%            { transform: translateY(-6px); }
-    }
-
-    /* ─── Welcome screen ──────────────────────────────── */
+    /* ─── Welcome ─────────────────────────────────────────────────────────── */
     #welcome {
-      flex: 1;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
       text-align: center;
-      padding: 32px 20px;
-      gap: 12px;
-      color: #666;
+      height: 100%;
+      gap: 16px;
+      padding: 20px;
     }
 
-    #welcome .logo {
-      font-size: 42px;
-      font-weight: 700;
-      color: #10a37f;
-      letter-spacing: -1px;
+    .welcome-icon {
+      width: 64px; height: 64px;
+      background: var(--accent);
+      border-radius: 16px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 28px; font-weight: 800; color: #fff;
+      animation: float 3s ease-in-out infinite;
+    }
+
+    @keyframes float {
+      0%,100% { transform: translateY(0); }
+      50%      { transform: translateY(-6px); }
+    }
+
+    #welcome h2 {
+      font-size: 22px;
+      font-weight: 600;
+      color: var(--text);
     }
 
     #welcome p {
-      font-size: 15px;
-      color: #888;
-      max-width: 320px;
+      font-size: 14px;
+      color: var(--text2);
+      max-width: 340px;
+      line-height: 1.6;
     }
 
-    /* ─── Input Bar ───────────────────────────────────── */
+    .suggestions {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 8px;
+      max-width: 520px;
+      margin-top: 8px;
+    }
+
+    .suggestion-chip {
+      padding: 8px 14px;
+      border-radius: 99px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--text2);
+      font-size: 13px;
+      cursor: pointer;
+      transition: all .15s;
+      white-space: nowrap;
+    }
+
+    .suggestion-chip:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: var(--accent-light);
+    }
+
+    /* ─── Message rows ────────────────────────────────────────────────────── */
+    .msg-group {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      animation: fadeIn .25s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .msg-row {
+      display: flex;
+      gap: 10px;
+      padding: 4px 0;
+    }
+
+    .msg-row.user  { justify-content: flex-start; flex-direction: row-reverse; }
+    .msg-row.bot   { justify-content: flex-start; }
+
+    .avatar {
+      width: 30px; height: 30px;
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 12px; font-weight: 700;
+      flex-shrink: 0;
+      margin-top: 4px;
+    }
+
+    .avatar.user { background: var(--bg3); color: var(--text2); }
+    .avatar.bot  { background: var(--accent); color: #fff; }
+
+    .msg-content {
+      max-width: min(78%, 700px);
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .bubble {
+      padding: 10px 14px;
+      border-radius: 14px;
+      font-size: 14.5px;
+      line-height: 1.7;
+      word-break: break-word;
+    }
+
+    .msg-row.user  .bubble {
+      background: var(--bg2);
+      color: var(--text);
+      border-top-left-radius: 4px;
+    }
+
+    .msg-row.bot .bubble {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text);
+      border-top-right-radius: 4px;
+    }
+
+    .msg-time {
+      font-size: 11px;
+      color: var(--text3);
+      padding: 0 4px;
+    }
+
+    .msg-row.user .msg-time { text-align: right; }
+
+    /* ─── Thinking block ──────────────────────────────────────────────────── */
+    .thinking-block {
+      border: 1px solid var(--think-border);
+      background: var(--think-bg);
+      border-radius: var(--radius-sm);
+      overflow: hidden;
+      font-size: 13px;
+    }
+
+    .thinking-header {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      padding: 8px 12px;
+      cursor: pointer;
+      color: var(--think-text);
+      font-weight: 500;
+      user-select: none;
+    }
+
+    .thinking-header:hover { opacity: .85; }
+
+    .think-spinner {
+      width: 14px; height: 14px;
+      border: 2px solid var(--think-border);
+      border-top-color: transparent;
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+      flex-shrink: 0;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .think-chevron {
+      margin-right: auto;
+      transition: transform .2s;
+      font-size: 12px;
+    }
+
+    .thinking-block.open .think-chevron { transform: rotate(180deg); }
+
+    .thinking-body {
+      display: none;
+      padding: 10px 12px 12px;
+      border-top: 1px solid var(--think-border);
+      color: var(--think-text);
+      white-space: pre-wrap;
+      line-height: 1.6;
+      max-height: 300px;
+      overflow-y: auto;
+    }
+
+    .thinking-block.open .thinking-body { display: block; }
+
+    /* ─── Markdown styles inside bubble ──────────────────────────────────── */
+    .bubble h1, .bubble h2, .bubble h3 {
+      margin: 12px 0 6px;
+      font-weight: 600;
+      line-height: 1.3;
+    }
+    .bubble h1 { font-size: 18px; }
+    .bubble h2 { font-size: 16px; }
+    .bubble h3 { font-size: 14.5px; }
+
+    .bubble p  { margin: 6px 0; }
+    .bubble p:first-child { margin-top: 0; }
+    .bubble p:last-child  { margin-bottom: 0; }
+
+    .bubble ul, .bubble ol {
+      margin: 6px 0;
+      padding-right: 20px;
+    }
+
+    .bubble li { margin: 3px 0; }
+
+    .bubble strong { font-weight: 600; }
+    .bubble em     { font-style: italic; }
+
+    .bubble a {
+      color: var(--accent);
+      text-decoration: underline;
+    }
+
+    .bubble hr {
+      border: none;
+      border-top: 1px solid var(--border);
+      margin: 10px 0;
+    }
+
+    /* ─── Inline code ─────────────────────────────────────────────────────── */
+    .bubble code:not([class]) {
+      background: var(--code-bg);
+      border: 1px solid var(--code-border);
+      border-radius: 4px;
+      padding: 1px 5px;
+      font-size: 13px;
+      font-family: 'Fira Code', 'Consolas', monospace;
+      color: #d63200;
+      direction: ltr;
+      display: inline-block;
+    }
+
+    [data-theme="dark"] .bubble code:not([class]) { color: #f97316; }
+
+    /* ─── Code block wrapper ──────────────────────────────────────────────── */
+    .code-wrapper {
+      margin: 10px 0;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--code-border);
+      overflow: hidden;
+      direction: ltr;
+    }
+
+    .code-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 7px 12px;
+      background: var(--code-bg);
+      border-bottom: 1px solid var(--code-border);
+      direction: ltr;
+    }
+
+    .code-lang {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text2);
+      font-family: monospace;
+      text-transform: lowercase;
+    }
+
+    .copy-btn {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      padding: 4px 10px;
+      border-radius: 5px;
+      border: 1px solid var(--code-border);
+      background: var(--surface);
+      color: var(--text2);
+      font-size: 12px;
+      cursor: pointer;
+      transition: all .15s;
+    }
+
+    .copy-btn:hover { background: var(--accent); color: #fff; border-color: var(--accent); }
+    .copy-btn.copied { background: #22c55e; color: #fff; border-color: #22c55e; }
+
+    .copy-btn svg { width: 13px; height: 13px; flex-shrink: 0; }
+
+    .code-wrapper pre {
+      margin: 0 !important;
+      border-radius: 0 !important;
+      padding: 14px !important;
+      overflow-x: auto;
+      font-size: 13px !important;
+      line-height: 1.6 !important;
+      background: var(--code-bg) !important;
+    }
+
+    .code-wrapper pre code { font-family: 'Fira Code', 'Consolas', monospace !important; }
+
+    /* ─── Typing indicator ────────────────────────────────────────────────── */
+    .typing-row {
+      display: flex;
+      gap: 10px;
+      padding: 4px 0;
+      align-items: flex-start;
+    }
+
+    .typing-bubble {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      border-top-right-radius: 4px;
+      padding: 12px 16px;
+      display: flex;
+      gap: 5px;
+      align-items: center;
+    }
+
+    .dot {
+      width: 7px; height: 7px;
+      background: var(--accent);
+      border-radius: 50%;
+      animation: bounce 1.1s infinite;
+      opacity: .6;
+    }
+    .dot:nth-child(2) { animation-delay: .15s; }
+    .dot:nth-child(3) { animation-delay: .3s; }
+
+    @keyframes bounce {
+      0%,80%,100% { transform: translateY(0); opacity: .6; }
+      40%          { transform: translateY(-5px); opacity: 1; }
+    }
+
+    /* ─── Scroll-to-bottom ────────────────────────────────────────────────── */
+    #scroll-btn {
+      position: absolute;
+      bottom: 16px;
+      left: 50%;
+      transform: translateX(-50%) scale(0);
+      width: 36px; height: 36px;
+      border-radius: 50%;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--text2);
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: transform .2s, box-shadow .2s;
+      box-shadow: var(--shadow);
+      z-index: 10;
+    }
+
+    #scroll-btn.show { transform: translateX(-50%) scale(1); }
+    #scroll-btn:hover { background: var(--bg2); }
+
+    /* ─── Footer ──────────────────────────────────────────────────────────── */
     footer {
-      padding: 12px 16px 20px;
-      background: #ffffff;
-      border-top: 1px solid #e5e5e5;
+      padding: 10px 16px 16px;
+      background: var(--bg);
+      border-top: 1px solid var(--border);
+      flex-shrink: 0;
     }
 
-    .input-wrapper {
+    .input-container {
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    .input-box {
       display: flex;
       align-items: flex-end;
-      gap: 10px;
-      max-width: 760px;
-      margin: 0 auto;
-      background: #f4f4f4;
-      border: 1.5px solid #e0e0e0;
+      gap: 8px;
+      background: var(--surface);
+      border: 1.5px solid var(--border);
       border-radius: 14px;
-      padding: 8px 8px 8px 14px;
-      transition: border-color 0.2s;
+      padding: 10px 10px 10px 14px;
+      transition: border-color .2s, box-shadow .2s;
     }
 
-    .input-wrapper:focus-within {
-      border-color: #10a37f;
-      background: #ffffff;
+    .input-box:focus-within {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(16,163,127,.12);
     }
 
     #userInput {
@@ -161,166 +538,508 @@
       border: none;
       background: transparent;
       outline: none;
-      font-size: 15px;
-      line-height: 1.5;
-      resize: none;
-      max-height: 140px;
-      min-height: 24px;
-      color: #1a1a1a;
+      font-size: 14.5px;
       font-family: inherit;
+      color: var(--text);
+      resize: none;
+      min-height: 24px;
+      max-height: 150px;
+      line-height: 1.6;
       direction: rtl;
     }
 
-    #userInput::placeholder { color: #aaa; }
+    #userInput::placeholder { color: var(--text3); }
 
-    #sendBtn {
-      width: 38px; height: 38px;
-      border-radius: 10px;
-      border: none;
-      background: #10a37f;
-      color: #fff;
-      cursor: pointer;
+    .input-actions {
       display: flex;
       align-items: center;
-      justify-content: center;
-      transition: background 0.2s, transform 0.1s;
+      gap: 6px;
+    }
+
+    #send-btn {
+      width: 36px; height: 36px;
+      border-radius: 9px;
+      border: none;
+      background: var(--accent);
+      color: #fff;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: background .15s, transform .1s;
       flex-shrink: 0;
     }
 
-    #sendBtn:hover  { background: #0d8f6e; }
-    #sendBtn:active { transform: scale(0.95); }
-    #sendBtn:disabled { background: #c0c0c0; cursor: not-allowed; }
+    #send-btn:hover    { background: var(--accent-hover); }
+    #send-btn:active   { transform: scale(.95); }
+    #send-btn:disabled { background: var(--bg3); cursor: not-allowed; }
+    #send-btn svg      { width: 17px; height: 17px; }
 
-    #sendBtn svg { width: 18px; height: 18px; }
+    .char-count {
+      font-size: 11px;
+      color: var(--text3);
+      min-width: 28px;
+      text-align: center;
+    }
 
-    /* ─── Responsive ──────────────────────────────────── */
-    @media (max-width: 480px) {
-      .bubble { max-width: 88%; font-size: 14px; }
-      header h1 { font-size: 16px; }
+    .char-count.warn { color: #f59e0b; }
+    .char-count.over { color: var(--danger); }
+
+    .footer-hint {
+      text-align: center;
+      font-size: 11px;
+      color: var(--text3);
+      margin-top: 8px;
+    }
+
+    /* ─── Responsive ──────────────────────────────────────────────────────── */
+    @media (max-width: 540px) {
+      .bubble  { font-size: 14px; }
+      .msg-content { max-width: 88%; }
+      header   { padding: 0 12px; }
+      #messages{ padding: 16px 10px 10px; }
+      footer   { padding: 8px 10px 14px; }
     }
   </style>
 </head>
 <body>
 
-  <header>
-    <h1>VSO <span>AI</span></h1>
-  </header>
+<!-- ─── Header ────────────────────────────────────────────────────────────── -->
+<header>
+  <div class="logo">
+    <div class="logo-icon">VS</div>
+    <span class="logo-name">VSO <span>AI</span></span>
+  </div>
 
+  <div class="header-actions">
+    <!-- Dark mode toggle -->
+    <button class="icon-btn" id="theme-btn" title="تغيير الوضع">
+      <svg id="sun-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+           stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+           width="16" height="16">
+        <circle cx="12" cy="12" r="5"/>
+        <line x1="12" y1="1" x2="12" y2="3"/>
+        <line x1="12" y1="21" x2="12" y2="23"/>
+        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
+        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+        <line x1="1" y1="12" x2="3" y2="12"/>
+        <line x1="21" y1="12" x2="23" y2="12"/>
+        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
+        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+      </svg>
+      <svg id="moon-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+           stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+           width="16" height="16" style="display:none">
+        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+      </svg>
+    </button>
+
+    <!-- Clear chat -->
+    <button class="icon-btn" id="clear-btn" title="مسح المحادثة">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+           stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+           width="15" height="15">
+        <polyline points="3 6 5 6 21 6"/>
+        <path d="M19 6l-1 14H6L5 6"/>
+        <path d="M10 11v6M14 11v6"/>
+        <path d="M9 6V4h6v2"/>
+      </svg>
+    </button>
+  </div>
+</header>
+
+<!-- ─── Chat ───────────────────────────────────────────────────────────────── -->
+<div id="chat-wrap">
   <div id="messages">
     <div id="welcome">
-      <div class="logo">VSO</div>
-      <p>مرحباً! كيف يمكنني مساعدتك اليوم؟</p>
+      <div class="welcome-icon">VS</div>
+      <h2>مرحباً بك في VSO AI</h2>
+      <p>مساعدك الذكي للبرمجة، التقنية، والأسئلة المعقدة. اسألني أي شيء!</p>
+      <div class="suggestions">
+        <span class="suggestion-chip" onclick="fillInput(this)">اكتب لي كود Python لفرز قائمة</span>
+        <span class="suggestion-chip" onclick="fillInput(this)">ما الفرق بين React و Vue؟</span>
+        <span class="suggestion-chip" onclick="fillInput(this)">اشرح مفهوم الـ API</span>
+        <span class="suggestion-chip" onclick="fillInput(this)">كيف أبني تطبيق Flask؟</span>
+      </div>
     </div>
   </div>
 
-  <footer>
-    <div class="input-wrapper">
-      <textarea
-        id="userInput"
-        rows="1"
-        placeholder="اكتب رسالتك هنا..."
-      ></textarea>
-      <button id="sendBtn" title="إرسال">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
-             stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-          <line x1="22" y1="2" x2="11" y2="13"/>
-          <polygon points="22 2 15 22 11 13 2 9 22 2"/>
-        </svg>
-      </button>
+  <button id="scroll-btn" title="انتقل للأسفل">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+         stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"
+         width="16" height="16">
+      <polyline points="6 9 12 15 18 9"/>
+    </svg>
+  </button>
+</div>
+
+<!-- ─── Footer ─────────────────────────────────────────────────────────────── -->
+<footer>
+  <div class="input-container">
+    <div class="input-box">
+      <textarea id="userInput" rows="1" placeholder="اكتب رسالتك…" maxlength="4000"></textarea>
+      <div class="input-actions">
+        <span class="char-count" id="char-count"></span>
+        <button id="send-btn" title="إرسال (Enter)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+               stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="22" y1="2" x2="11" y2="13"/>
+            <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+          </svg>
+        </button>
+      </div>
     </div>
-  </footer>
+    <p class="footer-hint">Enter للإرسال &nbsp;·&nbsp; Shift+Enter لسطر جديد</p>
+  </div>
+</footer>
 
-  <script>
-    const messagesEl = document.getElementById('messages');
-    const inputEl    = document.getElementById('userInput');
-    const sendBtn    = document.getElementById('sendBtn');
-    const welcomeEl  = document.getElementById('welcome');
+<!-- ─── Scripts ────────────────────────────────────────────────────────────── -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script>
+/* ── State ─────────────────────────────────────────────────────────────────── */
+let history   = [];
+let isDark    = false;
+let isLoading = false;
 
-    function hideWelcome() {
-      if (welcomeEl) welcomeEl.style.display = 'none';
+const messagesEl  = document.getElementById('messages');
+const welcomeEl   = document.getElementById('welcome');
+const inputEl     = document.getElementById('userInput');
+const sendBtn     = document.getElementById('send-btn');
+const charCount   = document.getElementById('char-count');
+const scrollBtn   = document.getElementById('scroll-btn');
+const themeBtn    = document.getElementById('theme-btn');
+const clearBtn    = document.getElementById('clear-btn');
+const sunIcon     = document.getElementById('sun-icon');
+const moonIcon    = document.getElementById('moon-icon');
+
+/* ── Markdown Parser ───────────────────────────────────────────────────────── */
+function parseMarkdown(text) {
+  // حفظ code blocks مؤقتاً
+  const codeBlocks = [];
+  text = text.replace(/```(\w*)\n?([\s\S]*?)```/g, (_, lang, code) => {
+    codeBlocks.push({ lang: lang || 'text', code: code.trim() });
+    return `\x00CODE${codeBlocks.length - 1}\x00`;
+  });
+
+  // Inline code
+  text = text.replace(/`([^`]+)`/g, '<code>$1</code>');
+
+  // Headers
+  text = text.replace(/^### (.+)$/gm, '<h3>$1</h3>');
+  text = text.replace(/^## (.+)$/gm,  '<h2>$1</h2>');
+  text = text.replace(/^# (.+)$/gm,   '<h1>$1</h1>');
+
+  // Bold & Italic
+  text = text.replace(/\*\*\*(.+?)\*\*\*/g, '<strong><em>$1</em></strong>');
+  text = text.replace(/\*\*(.+?)\*\*/g,     '<strong>$1</strong>');
+  text = text.replace(/\*(.+?)\*/g,         '<em>$1</em>');
+
+  // HR
+  text = text.replace(/^---+$/gm, '<hr>');
+
+  // Unordered lists
+  text = text.replace(/(^[-*] .+(\n[-*] .+)*)/gm, match => {
+    const items = match.split('\n')
+      .filter(l => l.trim())
+      .map(l => `<li>${l.replace(/^[-*] /, '')}</li>`)
+      .join('');
+    return `<ul>${items}</ul>`;
+  });
+
+  // Ordered lists
+  text = text.replace(/(^\d+\. .+(\n\d+\. .+)*)/gm, match => {
+    const items = match.split('\n')
+      .filter(l => l.trim())
+      .map(l => `<li>${l.replace(/^\d+\. /, '')}</li>`)
+      .join('');
+    return `<ol>${items}</ol>`;
+  });
+
+  // Links
+  text = text.replace(/\[(.+?)\]\((.+?)\)/g,
+    '<a href="$2" target="_blank" rel="noopener">$1</a>');
+
+  // Paragraphs (أسطر عادية)
+  const lines = text.split('\n');
+  const result = [];
+  let para = [];
+
+  for (const line of lines) {
+    if (/^<(h[1-3]|ul|ol|hr|div)/.test(line.trim()) || line.includes('\x00CODE')) {
+      if (para.length) { result.push(`<p>${para.join('<br>')}</p>`); para = []; }
+      result.push(line);
+    } else if (line.trim() === '') {
+      if (para.length) { result.push(`<p>${para.join('<br>')}</p>`); para = []; }
+    } else {
+      para.push(line);
     }
+  }
+  if (para.length) result.push(`<p>${para.join('<br>')}</p>`);
+  text = result.join('\n');
 
-    function appendMessage(role, text) {
-      hideWelcome();
-      const row    = document.createElement('div');
-      const bubble = document.createElement('div');
-      row.classList.add('msg-row', role);
-      bubble.classList.add('bubble');
-      bubble.textContent = text;
-      row.appendChild(bubble);
-      messagesEl.appendChild(row);
-      scrollToBottom();
-      return row;
-    }
+  // استعادة code blocks
+  text = text.replace(/\x00CODE(\d+)\x00/g, (_, i) => {
+    const { lang, code } = codeBlocks[parseInt(i)];
+    const escaped = code
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
+    const uniqueId = 'code-' + Date.now() + '-' + i;
+    return `
+      <div class="code-wrapper">
+        <div class="code-header">
+          <span class="code-lang">${lang}</span>
+          <button class="copy-btn" onclick="copyCode(this)" data-code="${encodeURIComponent(code)}">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                 stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+            </svg>
+            نسخ
+          </button>
+        </div>
+        <pre><code class="language-${lang}" id="${uniqueId}">${escaped}</code></pre>
+      </div>`;
+  });
 
-    function showTyping() {
-      hideWelcome();
-      const row    = document.createElement('div');
-      const bubble = document.createElement('div');
-      row.classList.add('msg-row', 'bot');
-      bubble.classList.add('typing-bubble');
-      bubble.innerHTML = '<div class="dot"></div><div class="dot"></div><div class="dot"></div>';
-      row.appendChild(bubble);
-      messagesEl.appendChild(row);
-      scrollToBottom();
-      return row;
-    }
+  return text;
+}
 
-    function scrollToBottom() {
-      messagesEl.scrollTop = messagesEl.scrollHeight;
-    }
+/* ── Copy code ──────────────────────────────────────────────────────────────── */
+function copyCode(btn) {
+  const code = decodeURIComponent(btn.dataset.code);
+  navigator.clipboard.writeText(code).then(() => {
+    btn.textContent = '✓ تم النسخ';
+    btn.classList.add('copied');
+    setTimeout(() => {
+      btn.innerHTML = `
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+             stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+             width="13" height="13">
+          <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+          <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+        </svg>
+        نسخ`;
+      btn.classList.remove('copied');
+    }, 2000);
+  });
+}
 
-    function autoResize() {
-      inputEl.style.height = 'auto';
-      inputEl.style.height = Math.min(inputEl.scrollHeight, 140) + 'px';
-    }
+/* ── Timestamp ──────────────────────────────────────────────────────────────── */
+function getTime() {
+  return new Date().toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' });
+}
 
-    async function sendMessage() {
-      const text = inputEl.value.trim();
-      if (!text) return;
+/* ── Append message ─────────────────────────────────────────────────────────── */
+function appendMessage(role, text, thinking = null) {
+  if (welcomeEl) welcomeEl.style.display = 'none';
 
-      inputEl.value = '';
-      inputEl.style.height = 'auto';
-      sendBtn.disabled = true;
+  const group  = document.createElement('div');
+  group.classList.add('msg-group');
 
-      appendMessage('user', text);
-      const typingRow = showTyping();
+  const row    = document.createElement('div');
+  row.classList.add('msg-row', role);
 
-      try {
-        const res = await fetch('/chat', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ message: text })
-        });
+  // Avatar
+  const avatar = document.createElement('div');
+  avatar.classList.add('avatar', role);
+  avatar.textContent = role === 'user' ? 'أنت' : 'VS';
 
-        const data = await res.json();
-        typingRow.remove();
+  // Content wrapper
+  const content = document.createElement('div');
+  content.classList.add('msg-content');
 
-        if (data.reply) {
-          appendMessage('bot', data.reply);
-        } else {
-          appendMessage('bot', 'عذراً، حدث خطأ: ' + (data.error || 'غير معروف'));
-        }
-      } catch (err) {
-        typingRow.remove();
-        appendMessage('bot', 'تعذّر الاتصال بالخادم. يرجى المحاولة لاحقاً.');
-      } finally {
-        sendBtn.disabled = false;
-        inputEl.focus();
-      }
-    }
+  // Thinking block
+  if (thinking) {
+    const thinkEl = document.createElement('div');
+    thinkEl.classList.add('thinking-block');
+    thinkEl.innerHTML = `
+      <div class="thinking-header" onclick="this.parentElement.classList.toggle('open')">
+        <div class="think-spinner"></div>
+        <span>تفكير VSO</span>
+        <span class="think-chevron">▾</span>
+      </div>
+      <div class="thinking-body">${escapeHtml(thinking)}</div>`;
+    content.appendChild(thinkEl);
+  }
 
-    sendBtn.addEventListener('click', sendMessage);
+  // Bubble
+  const bubble = document.createElement('div');
+  bubble.classList.add('bubble');
 
-    inputEl.addEventListener('input', autoResize);
-
-    inputEl.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter' && !e.shiftKey) {
-        e.preventDefault();
-        sendMessage();
-      }
+  if (role === 'bot') {
+    bubble.innerHTML = parseMarkdown(text);
+    // تطبيق Highlight.js
+    bubble.querySelectorAll('pre code').forEach(el => {
+      try { hljs.highlightElement(el); } catch(e) {}
     });
-  </script>
+  } else {
+    bubble.textContent = text;
+  }
 
+  content.appendChild(bubble);
+
+  // Time
+  const timeEl = document.createElement('div');
+  timeEl.classList.add('msg-time');
+  timeEl.textContent = getTime();
+  content.appendChild(timeEl);
+
+  row.appendChild(avatar);
+  row.appendChild(content);
+  group.appendChild(row);
+  messagesEl.appendChild(group);
+  scrollToBottom();
+
+  return group;
+}
+
+/* ── Typing indicator ───────────────────────────────────────────────────────── */
+function showTyping() {
+  if (welcomeEl) welcomeEl.style.display = 'none';
+  const row = document.createElement('div');
+  row.classList.add('typing-row');
+
+  const avatar = document.createElement('div');
+  avatar.classList.add('avatar', 'bot');
+  avatar.textContent = 'VS';
+
+  const bubble = document.createElement('div');
+  bubble.classList.add('typing-bubble');
+  bubble.innerHTML = '<div class="dot"></div><div class="dot"></div><div class="dot"></div>';
+
+  row.appendChild(avatar);
+  row.appendChild(bubble);
+  messagesEl.appendChild(row);
+  scrollToBottom();
+  return row;
+}
+
+/* ── Send message ────────────────────────────────────────────────────────────── */
+async function sendMessage() {
+  if (isLoading) return;
+  const text = inputEl.value.trim();
+  if (!text) return;
+
+  inputEl.value = '';
+  inputEl.style.height = 'auto';
+  charCount.textContent = '';
+  isLoading = true;
+  sendBtn.disabled = true;
+
+  appendMessage('user', text);
+  history.push({ role: 'user', content: text });
+
+  const typingRow = showTyping();
+
+  try {
+    const res = await fetch('/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: text, history: history.slice(-12) })
+    });
+
+    const data = await res.json();
+    typingRow.remove();
+
+    if (data.reply) {
+      appendMessage('bot', data.reply, data.thinking || null);
+      history.push({ role: 'assistant', content: data.reply });
+    } else {
+      appendMessage('bot', '⚠️ ' + (data.error || 'حدث خطأ غير معروف.'));
+    }
+  } catch (err) {
+    typingRow.remove();
+    appendMessage('bot', '⚠️ تعذّر الاتصال بالخادم. تحقق من الاتصال وحاول مجدداً.');
+  } finally {
+    isLoading = false;
+    sendBtn.disabled = false;
+    inputEl.focus();
+  }
+}
+
+/* ── Helpers ────────────────────────────────────────────────────────────────── */
+function escapeHtml(text) {
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+}
+
+function scrollToBottom(smooth = true) {
+  messagesEl.scrollTo({ top: messagesEl.scrollHeight, behavior: smooth ? 'smooth' : 'auto' });
+}
+
+function fillInput(chip) {
+  inputEl.value = chip.textContent;
+  inputEl.focus();
+  autoResize();
+  charCount.textContent = inputEl.value.length + '/4000';
+}
+
+function autoResize() {
+  inputEl.style.height = 'auto';
+  inputEl.style.height = Math.min(inputEl.scrollHeight, 150) + 'px';
+}
+
+function toggleTheme() {
+  isDark = !isDark;
+  document.documentElement.dataset.theme = isDark ? 'dark' : '';
+  document.getElementById('hljs-theme-light').disabled = isDark;
+  document.getElementById('hljs-theme-dark').disabled  = !isDark;
+  sunIcon.style.display  = isDark ? 'none'  : '';
+  moonIcon.style.display = isDark ? ''      : 'none';
+}
+
+/* ── Event listeners ────────────────────────────────────────────────────────── */
+sendBtn.addEventListener('click', sendMessage);
+
+inputEl.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    sendMessage();
+  }
+});
+
+inputEl.addEventListener('input', () => {
+  autoResize();
+  const len = inputEl.value.length;
+  if (len > 0) {
+    charCount.textContent = len + '/4000';
+    charCount.className = 'char-count' + (len > 3500 ? ' over' : len > 3000 ? ' warn' : '');
+  } else {
+    charCount.textContent = '';
+  }
+});
+
+themeBtn.addEventListener('click', toggleTheme);
+
+clearBtn.addEventListener('click', () => {
+  if (!confirm('هل تريد مسح المحادثة؟')) return;
+  history = [];
+  messagesEl.innerHTML = '';
+  const w = document.createElement('div');
+  w.id = 'welcome';
+  w.innerHTML = `
+    <div class="welcome-icon">VS</div>
+    <h2>مرحباً بك في VSO AI</h2>
+    <p>مساعدك الذكي للبرمجة، التقنية، والأسئلة المعقدة. اسألني أي شيء!</p>
+    <div class="suggestions">
+      <span class="suggestion-chip" onclick="fillInput(this)">اكتب لي كود Python لفرز قائمة</span>
+      <span class="suggestion-chip" onclick="fillInput(this)">ما الفرق بين React و Vue؟</span>
+      <span class="suggestion-chip" onclick="fillInput(this)">اشرح مفهوم الـ API</span>
+      <span class="suggestion-chip" onclick="fillInput(this)">كيف أبني تطبيق Flask؟</span>
+    </div>`;
+  messagesEl.appendChild(w);
+});
+
+scrollBtn.addEventListener('click', scrollToBottom);
+
+messagesEl.addEventListener('scroll', () => {
+  const atBottom = messagesEl.scrollHeight - messagesEl.scrollTop - messagesEl.clientHeight < 100;
+  scrollBtn.classList.toggle('show', !atBottom);
+});
+
+// Focus on load
+inputEl.focus();
+</script>
 </body>
 </html>
